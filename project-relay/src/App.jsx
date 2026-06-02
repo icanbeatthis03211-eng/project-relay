@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_BASE_URL = "http://localhost:3001";
+const API_BASE_URL = "https://project-relay-x9mb.onrender.com";
 
 function App() {
   const [page, setPage] = useState("home");
