@@ -53,6 +53,7 @@ const makeShortText = (text, maxLength = 120) => {
 const toClientFeedback = (row) => {
   return {
     id: row.id,
+    userId: row.user_id,
     project: row.project,
     source: row.source,
     text: row.text,
@@ -72,6 +73,7 @@ const toClientFeedback = (row) => {
 
 const toDbFeedback = (feedback) => {
   return {
+    user_id: feedback.userId,
     project: feedback.project || "선택되지 않음",
     source: feedback.source || "선택되지 않음",
     text: feedback.text || "입력된 피드백이 없습니다.",
@@ -235,7 +237,7 @@ ${feedbackText}
    Supabase DB API
 ========================= */
 
-// 피드백 전체 불러오기
+// 내 피드백만 불러오기
 app.get("/api/feedbacks", async (req, res) => {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -244,9 +246,18 @@ app.get("/api/feedbacks", async (req, res) => {
       });
     }
 
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        error: "userId가 필요합니다.",
+      });
+    }
+
     const { data, error } = await supabase
       .from("feedbacks")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -264,6 +275,36 @@ app.get("/api/feedbacks", async (req, res) => {
   }
 });
 
+// 공유 피드백 전체 불러오기
+app.get("/api/shared-feedbacks", async (req, res) => {
+  try {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return res.status(500).json({
+        error: "Supabase 환경변수가 설정되어 있지 않습니다.",
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("feedbacks")
+      .select("*")
+      .eq("is_shared", true)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return res.json(data.map(toClientFeedback));
+  } catch (error) {
+    console.error("Supabase Shared GET Error:", error);
+
+    return res.status(500).json({
+      error: "공유 피드백 목록을 불러오지 못했습니다.",
+      detail: error.message,
+    });
+  }
+});
+
 // 피드백 저장하기
 app.post("/api/feedbacks", async (req, res) => {
   try {
@@ -274,6 +315,12 @@ app.post("/api/feedbacks", async (req, res) => {
     }
 
     const feedback = req.body;
+
+    if (!feedback.userId) {
+      return res.status(400).json({
+        error: "userId가 필요합니다.",
+      });
+    }
 
     const { data, error } = await supabase
       .from("feedbacks")
