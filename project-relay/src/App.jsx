@@ -3,8 +3,23 @@ import "./App.css";
 
 const API_BASE_URL = "https://project-relay-x9mb.onrender.com";
 
+const getOrCreateUserId = () => {
+  const savedUserId = localStorage.getItem("projectRelayUserId");
+
+  if (savedUserId) {
+    return savedUserId;
+  }
+
+  const newUserId = crypto.randomUUID();
+  localStorage.setItem("projectRelayUserId", newUserId);
+
+  return newUserId;
+};
+
 function App() {
   const [page, setPage] = useState("home");
+
+  const [userId] = useState(() => getOrCreateUserId());
 
   const [feedbackText, setFeedbackText] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
@@ -63,24 +78,46 @@ function App() {
 
   const fetchFeedbacksFromDB = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/feedbacks`);
+      const response = await fetch(
+        `${API_BASE_URL}/api/feedbacks?userId=${userId}`
+      );
 
       if (!response.ok) {
-        throw new Error("DB에서 피드백을 불러오지 못했습니다.");
+        throw new Error("DB에서 내 피드백을 불러오지 못했습니다.");
       }
 
       const data = await response.json();
 
       setFeedbackList(data);
-      setSharedFeedbackList(data.filter((feedback) => feedback.isShared));
     } catch (error) {
       console.error(error);
-      alert(`DB 불러오기에 실패했습니다: ${error.message}`);
+      alert(`내 기록 불러오기에 실패했습니다: ${error.message}`);
     }
   };
 
+  const fetchSharedFeedbacksFromDB = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/shared-feedbacks`);
+
+      if (!response.ok) {
+        throw new Error("DB에서 공유 피드백을 불러오지 못했습니다.");
+      }
+
+      const data = await response.json();
+
+      setSharedFeedbackList(data);
+    } catch (error) {
+      console.error(error);
+      alert(`공유 피드백 불러오기에 실패했습니다: ${error.message}`);
+    }
+  };
+
+  const fetchAllFeedbackData = async () => {
+    await Promise.all([fetchFeedbacksFromDB(), fetchSharedFeedbacksFromDB()]);
+  };
+
   useEffect(() => {
-    fetchFeedbacksFromDB();
+    fetchAllFeedbackData();
   }, []);
 
   useEffect(() => {
@@ -177,7 +214,9 @@ function App() {
     }
 
     if (tags.includes("사용자 관점")) {
-      checklist.push("공급자 관점이 아니라 사용자 행동과 니즈를 기준으로 설명했는가?");
+      checklist.push(
+        "공급자 관점이 아니라 사용자 행동과 니즈를 기준으로 설명했는가?"
+      );
     }
 
     if (checklist.length === 0) {
@@ -314,6 +353,7 @@ function App() {
     const { problemText, actionText } = getCurrentProblemAndAction();
 
     return {
+      userId,
       project: selectedProject || "선택되지 않음",
       source: selectedSource || "선택되지 않음",
       text: feedbackText || "입력된 피드백이 없습니다.",
@@ -346,7 +386,9 @@ function App() {
       const savedFeedback = await response.json();
 
       if (!response.ok) {
-        throw new Error(savedFeedback.error || "DB에 피드백을 저장하지 못했습니다.");
+        throw new Error(
+          savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
+        );
       }
 
       setFeedbackList([savedFeedback, ...feedbackList]);
@@ -399,6 +441,7 @@ function App() {
       );
 
       setSharedFeedbackList([updatedFeedback, ...sharedFeedbackList]);
+
       goToPage("shared");
     } catch (error) {
       console.error(error);
@@ -450,7 +493,9 @@ function App() {
       const updatedFeedback = await response.json();
 
       if (!response.ok) {
-        throw new Error(updatedFeedback.error || "공유 상태를 취소하지 못했습니다.");
+        throw new Error(
+          updatedFeedback.error || "공유 상태를 취소하지 못했습니다."
+        );
       }
 
       setSharedFeedbackList(
@@ -478,7 +523,7 @@ function App() {
 
   const handleClearAllData = async () => {
     const isConfirmed = window.confirm(
-      "저장된 피드백과 공유 피드백을 모두 삭제할까요?"
+      "내 기록에 저장된 피드백을 모두 삭제할까요? 공유 피드백 목록에서는 내가 삭제한 피드백도 함께 사라집니다."
     );
 
     if (!isConfirmed) return;
@@ -493,7 +538,11 @@ function App() {
       );
 
       setFeedbackList([]);
-      setSharedFeedbackList([]);
+      setSharedFeedbackList(
+        sharedFeedbackList.filter(
+          (sharedFeedback) => sharedFeedback.userId !== userId
+        )
+      );
       setSelectedFeedbackForChecklist(null);
       setCheckedChecklistItems({});
 
@@ -638,7 +687,7 @@ function App() {
             <p>공유 피드백: {sharedFeedbackList.length}개</p>
           </div>
 
-          <button onClick={handleClearAllData}>전체 데이터 초기화</button>
+          <button onClick={handleClearAllData}>내 기록 전체 삭제</button>
         </section>
       )}
 
