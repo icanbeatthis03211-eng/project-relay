@@ -90,7 +90,6 @@ function App() {
       }
 
       const data = await response.json();
-
       setFeedbackList(data);
     } catch (error) {
       console.error(error);
@@ -107,7 +106,6 @@ function App() {
       }
 
       const data = await response.json();
-
       setSharedFeedbackList(data);
     } catch (error) {
       console.error(error);
@@ -277,7 +275,9 @@ function App() {
     }
 
     if (tags.includes("발표 흐름")) {
-      checklist.push("Problem → Insight → Solution 흐름이 자연스럽게 이어지는가?");
+      checklist.push(
+        "Problem → Insight → Solution 흐름이 자연스럽게 이어지는가?"
+      );
     }
 
     if (tags.includes("기능 논리")) {
@@ -485,35 +485,39 @@ function App() {
     };
   };
 
+  const saveFeedbackToDB = async (newFeedback) => {
+    const response = await fetch(`${API_BASE_URL}/api/feedbacks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newFeedback),
+    });
+
+    const savedFeedback = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
+      );
+    }
+
+    setFeedbackList([savedFeedback, ...feedbackList]);
+
+    setFeedbackText("");
+    setSelectedProject("");
+    setSelectedSource("");
+    setAnalysisResult(null);
+    setAnalysisError("");
+
+    goToPage("log");
+  };
+
   const handleSaveFeedback = async () => {
     const newFeedback = createFeedbackData();
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/feedbacks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newFeedback),
-      });
-
-      const savedFeedback = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
-        );
-      }
-
-      setFeedbackList([savedFeedback, ...feedbackList]);
-
-      setFeedbackText("");
-      setSelectedProject("");
-      setSelectedSource("");
-      setAnalysisResult(null);
-      setAnalysisError("");
-
-      goToPage("log");
+      await saveFeedbackToDB(newFeedback);
     } catch (error) {
       console.error(error);
       alert(`피드백 저장에 실패했습니다: ${error.message}`);
@@ -529,31 +533,7 @@ function App() {
     const newFeedback = createFeedbackData();
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/feedbacks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newFeedback),
-      });
-
-      const savedFeedback = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
-        );
-      }
-
-      setFeedbackList([savedFeedback, ...feedbackList]);
-
-      setFeedbackText("");
-      setSelectedProject("");
-      setSelectedSource("");
-      setAnalysisResult(null);
-      setAnalysisError("");
-
-      goToPage("log");
+      await saveFeedbackToDB(newFeedback);
     } catch (error) {
       console.error(error);
       alert(`피드백 저장에 실패했습니다: ${error.message}`);
@@ -1189,7 +1169,15 @@ function App() {
                     삭제하기
                   </button>
 
-                  <button onClick={() => setShareTargetFeedback(feedback)}>
+                  <button
+                    onClick={() => {
+                      if (shareTargetFeedback?.id === feedback.id) {
+                        setShareTargetFeedback(null);
+                      } else {
+                        setShareTargetFeedback(feedback);
+                      }
+                    }}
+                  >
                     익명 공유하기
                   </button>
 
@@ -1199,6 +1187,84 @@ function App() {
                     이 피드백으로 체크리스트 만들기
                   </button>
                 </div>
+
+                {shareTargetFeedback?.id === feedback.id && (
+                  <div className="share-option-box">
+                    <h2>공유 방식을 선택해주세요</h2>
+                    <p>
+                      이 피드백을 다른 사용자에게 익명으로 공유합니다. 개인 이름,
+                      팀명, 회사명 등 식별 가능한 정보가 포함되어 있다면 요약만
+                      공유하는 것을 추천합니다.
+                    </p>
+
+                    {isQuickSavedFeedback(shareTargetFeedback) && (
+                      <p className="share-warning">
+                        이 피드백은 GPT 분석 없이 저장되어 별도 요약이 없습니다.
+                        공유하려면 원문 포함 공유를 선택해주세요.
+                      </p>
+                    )}
+
+                    <div className="shared-summary">
+                      {!isQuickSavedFeedback(shareTargetFeedback) && (
+                        <div className="summary-block problem">
+                          <span className="summary-label">
+                            요약 공유 미리보기
+                          </span>
+                          <p className="summary-text">
+                            {shareTargetFeedback.problemSummary ||
+                              shareTargetFeedback.shareSummary ||
+                              shareTargetFeedback.summary ||
+                              "요약된 피드백이 없습니다."}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="summary-block action">
+                        <span className="summary-label">
+                          원문 포함 공유 시 공개되는 내용
+                        </span>
+                        <p className="summary-text">
+                          {shareTargetFeedback.text ||
+                            "입력한 피드백이 없습니다."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!isQuickSavedFeedback(shareTargetFeedback) && (
+                      <p className="share-warning">
+                        요약만 공유하면 핵심 문제와 태그 중심으로 공개되고, 원문
+                        포함 공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
+                      </p>
+                    )}
+
+                    <div className="button-row share-option-buttons">
+                      {!isQuickSavedFeedback(shareTargetFeedback) && (
+                        <button
+                          onClick={() =>
+                            handleShareSavedFeedback(
+                              shareTargetFeedback,
+                              "summary"
+                            )
+                          }
+                        >
+                          요약만 공유하기
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() =>
+                          handleShareSavedFeedback(shareTargetFeedback, "full")
+                        }
+                      >
+                        원문 포함 공유하기
+                      </button>
+
+                      <button onClick={() => setShareTargetFeedback(null)}>
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -1235,78 +1301,6 @@ function App() {
                     </label>
                   );
                 })}
-              </div>
-            </div>
-          )}
-
-          {shareTargetFeedback && (
-            <div className="box share-option-box">
-              <h2>공유 방식을 선택해주세요</h2>
-              <p>
-                이 피드백을 다른 사용자에게 익명으로 공유합니다. 개인 이름,
-                팀명, 회사명 등 식별 가능한 정보가 포함되어 있다면 요약만
-                공유하는 것을 추천합니다.
-              </p>
-
-              {isQuickSavedFeedback(shareTargetFeedback) && (
-                <p className="share-warning">
-                  이 피드백은 GPT 분석 없이 저장되어 별도 요약이 없습니다.
-                  공유하려면 원문 포함 공유를 선택해주세요.
-                </p>
-              )}
-
-              <div className="shared-summary">
-                {!isQuickSavedFeedback(shareTargetFeedback) && (
-                  <div className="summary-block problem">
-                    <span className="summary-label">요약 공유 미리보기</span>
-                    <p className="summary-text">
-                      {shareTargetFeedback.problemSummary ||
-                        shareTargetFeedback.shareSummary ||
-                        shareTargetFeedback.summary ||
-                        "요약된 피드백이 없습니다."}
-                    </p>
-                  </div>
-                )}
-
-                <div className="summary-block action">
-                  <span className="summary-label">
-                    원문 포함 공유 시 공개되는 내용
-                  </span>
-                  <p className="summary-text">
-                    {shareTargetFeedback.text || "입력한 피드백이 없습니다."}
-                  </p>
-                </div>
-              </div>
-
-              {!isQuickSavedFeedback(shareTargetFeedback) && (
-                <p className="share-warning">
-                  요약만 공유하면 핵심 문제와 태그 중심으로 공개되고, 원문 포함
-                  공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
-                </p>
-              )}
-
-              <div className="button-row share-option-buttons">
-                {!isQuickSavedFeedback(shareTargetFeedback) && (
-                  <button
-                    onClick={() =>
-                      handleShareSavedFeedback(shareTargetFeedback, "summary")
-                    }
-                  >
-                    요약만 공유하기
-                  </button>
-                )}
-
-                <button
-                  onClick={() =>
-                    handleShareSavedFeedback(shareTargetFeedback, "full")
-                  }
-                >
-                  원문 포함 공유하기
-                </button>
-
-                <button onClick={() => setShareTargetFeedback(null)}>
-                  취소
-                </button>
               </div>
             </div>
           )}
