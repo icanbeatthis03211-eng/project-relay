@@ -144,6 +144,25 @@ function App() {
     }
   };
 
+  const validateFeedbackInput = () => {
+    if (!selectedProject) {
+      alert("프로젝트 유형을 선택해 주세요.");
+      return false;
+    }
+
+    if (feedbackText.trim() === "") {
+      alert("피드백 내용을 입력해 주세요.");
+      return false;
+    }
+
+    if (!selectedSource) {
+      alert("피드백 출처를 선택해 주세요.");
+      return false;
+    }
+
+    return true;
+  };
+
   const getTags = (text) => {
     const tags = [];
 
@@ -427,8 +446,7 @@ function App() {
   };
 
   const handleAnalyzeFeedback = async () => {
-    if (feedbackText.trim() === "") {
-      alert("분석할 피드백을 먼저 입력해 주세요.");
+    if (!validateFeedbackInput()) {
       return;
     }
 
@@ -475,9 +493,9 @@ function App() {
 
     return {
       userId,
-      project: selectedProject || "선택되지 않음",
-      source: selectedSource || "선택되지 않음",
-      text: feedbackText || "입력된 피드백이 없습니다.",
+      project: selectedProject,
+      source: selectedSource,
+      text: feedbackText,
 
       summary: isAnalyzed
         ? analysisResult.summary
@@ -537,6 +555,10 @@ function App() {
   };
 
   const handleSaveFeedback = async () => {
+    if (!validateFeedbackInput()) {
+      return;
+    }
+
     const newFeedback = createFeedbackData();
 
     try {
@@ -548,8 +570,7 @@ function App() {
   };
 
   const handleSaveWithoutAnalysis = async () => {
-    if (feedbackText.trim() === "") {
-      alert("저장할 피드백을 먼저 입력해 주세요.");
+    if (!validateFeedbackInput()) {
       return;
     }
 
@@ -958,8 +979,8 @@ function App() {
 
           <div className="box">
             <h2>입력 정보</h2>
-            <p>프로젝트 유형: {selectedProject || "선택되지 않음"}</p>
-            <p>피드백 출처: {selectedSource || "선택되지 않음"}</p>
+            <p>프로젝트 유형: {selectedProject}</p>
+            <p>피드백 출처: {selectedSource}</p>
           </div>
 
           <div className="box">
