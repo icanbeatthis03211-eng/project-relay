@@ -432,29 +432,6 @@ button:disabled {
   font-weight: 650;
 }
 
-/* Share option */
-.share-option-box {
-  border-color: rgba(109, 93, 252, 0.28);
-  background: #ffffff;
-}
-
-.share-option-buttons {
-  justify-content: center;
-  gap: 14px;
-  margin-top: 24px;
-}
-
-.share-warning {
-  max-width: 100%;
-  padding: 14px 16px;
-  background: #fff7ed;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
-  border-radius: 16px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
 /* My feedback card */
 .feedback-card {
   padding: 32px;
@@ -558,6 +535,46 @@ button:disabled {
   line-height: 1.8;
   font-weight: 650;
   letter-spacing: -0.02em;
+}
+
+/* Share option inline box */
+.share-option-box {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid rgba(109, 93, 252, 0.28);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.share-option-box h2 {
+  margin-bottom: 10px;
+}
+
+.share-option-box > p {
+  max-width: 100%;
+}
+
+.share-option-box .shared-summary {
+  margin: 20px 0;
+}
+
+.share-option-buttons {
+  justify-content: center;
+  gap: 14px;
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
+.share-warning {
+  max-width: 100%;
+  padding: 14px 16px;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 /* Responsive */
@@ -667,6 +684,20 @@ button:disabled {
   .feedback-content-text {
     font-size: 15px;
     font-weight: 700;
+  }
+
+  .share-option-box {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .share-option-box .shared-summary {
+    margin: 16px 0;
+  }
+
+  .share-option-buttons {
+    gap: 10px;
   }
 }
 
