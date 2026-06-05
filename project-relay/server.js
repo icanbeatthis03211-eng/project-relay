@@ -33,9 +33,11 @@ const allowedTags = [
   "우선순위",
   "발표 흐름",
   "기능 논리",
-  "장표 표현",
+  "문서화",
   "데이터 해석",
   "사용자 관점",
+  "비즈니스 관점",
+  "기타",
 ];
 
 const makeShortText = (text, maxLength = 120) => {
@@ -90,10 +92,6 @@ const toDbFeedback = (feedback) => {
   };
 };
 
-/* =========================
-   GPT 피드백 분석 API
-========================= */
-
 app.post("/api/analyze-feedback", async (req, res) => {
   try {
     const { feedbackText, selectedProject, selectedSource } = req.body;
@@ -118,22 +116,18 @@ app.post("/api/analyze-feedback", async (req, res) => {
           content: `
 너는 PM/서비스기획 부트캠프 수강생의 피드백을 분석하는 도우미다.
 
-중요한 목표:
-긴 피드백을 그대로 요약하지 말고, 공유 피드백 카드에서 사람들이 빠르게 읽을 수 있는 짧은 문장으로 압축해야 한다.
-
 반드시 지켜야 할 규칙:
 1. 반드시 JSON 형식으로만 답한다.
 2. JSON 바깥에 설명을 쓰지 않는다.
 3. tags는 제공된 태그 목록 중에서만 고른다.
-4. summary는 내 기록용 요약이다. 최대 2문장으로 작성한다.
-5. shareSummary는 공유 카드용 요약이다. 반드시 2줄 이내로 작성한다.
+4. summary는 내 기록용 요약이다. 해결 방향이 아니라 "무엇이 문제였는지" 중심으로 최대 2문장 작성한다.
+5. shareSummary는 공유 카드용 요약이다. 문제 중심으로만 작성한다.
 6. problemSummary는 "무엇이 문제인지"만 한 문장으로 작성한다.
-7. actionSummary는 "다음 프로젝트에서 무엇을 해야 하는지"만 한 문장으로 작성한다.
-8. problemSummary와 actionSummary는 각각 70자 이내로 작성한다.
-9. shareSummary는 problemSummary와 actionSummary를 합친 느낌으로 작성한다.
-10. 피드백 원문을 길게 풀어쓰지 않는다.
-11. 개인 이름, 팀명, 회사명 등 개인 식별 정보는 제거한다.
-12. checklist는 다음 프로젝트에서 바로 확인 가능한 질문형 문장으로 작성한다.
+7. actionSummary는 "다음 프로젝트에서 무엇을 확인해야 하는지"를 한 문장으로 작성한다.
+8. problemSummary와 actionSummary는 각각 90자 이내로 작성한다.
+9. 개인 이름, 팀명, 회사명 등 개인 식별 정보는 제거한다.
+10. checklist는 다음 프로젝트에서 바로 확인 가능한 질문형 문장으로 작성한다.
+11. summary, shareSummary, problemSummary에는 "집중해야 합니다", "개선해야 합니다", "확인해야 합니다"처럼 해결 지시 문장을 넣지 않는다.
           `,
         },
         {
@@ -148,10 +142,10 @@ ${feedbackText}
 아래 JSON 형식으로만 답해줘.
 
 {
-  "summary": "내 기록용 요약. 최대 2문장.",
-  "shareSummary": "공유 카드용 요약. 최대 2줄.",
-  "problemSummary": "문제만 한 문장으로 요약. 70자 이내.",
-  "actionSummary": "다음 프로젝트에서 할 일을 한 문장으로 요약. 70자 이내.",
+  "summary": "문제 중심 요약. 해결 방향 말고 무엇이 문제였는지만 최대 2문장.",
+  "shareSummary": "공유 카드용 문제 요약. 해결 방향 없이 최대 1~2문장.",
+  "problemSummary": "문제만 한 문장으로 요약. 90자 이내.",
+  "actionSummary": "다음 프로젝트에서 확인할 일을 한 문장으로 요약. 90자 이내.",
   "tags": ["문제 정의", "우선순위"],
   "improvementPoint": "다음 프로젝트에서 개선해야 할 점. 최대 1문장.",
   "checklist": [
@@ -162,7 +156,7 @@ ${feedbackText}
 }
 
 사용 가능한 태그:
-문제 정의, 타깃 설정, 리서치 근거, KPI, 우선순위, 발표 흐름, 기능 논리, 장표 표현, 데이터 해석, 사용자 관점
+문제 정의, 타깃 설정, 리서치 근거, KPI, 우선순위, 발표 흐름, 기능 논리, 문서화, 데이터 해석, 사용자 관점, 비즈니스 관점, 기타
           `,
         },
       ],
@@ -187,32 +181,28 @@ ${feedbackText}
 
     const problemSummary = makeShortText(
       analysisResult.problemSummary ||
+        analysisResult.shareSummary ||
         analysisResult.summary ||
         "피드백의 핵심 문제가 정리되지 않았습니다.",
-      70
+      90
     );
 
     const actionSummary = makeShortText(
       analysisResult.actionSummary ||
         analysisResult.improvementPoint ||
         "다음 프로젝트에서 개선 방향을 다시 확인해야 합니다.",
-      70
+      90
     );
 
-    const shareSummary =
-      analysisResult.shareSummary && analysisResult.shareSummary.length <= 160
-        ? analysisResult.shareSummary
-        : `${problemSummary}\n${actionSummary}`;
-
     const safeResult = {
-      summary: makeShortText(
-        analysisResult.summary || `${problemSummary} ${actionSummary}`,
-        180
+      summary: makeShortText(analysisResult.summary || problemSummary, 180),
+      shareSummary: makeShortText(
+        analysisResult.shareSummary || problemSummary,
+        160
       ),
-      shareSummary,
       problemSummary,
       actionSummary,
-      tags: filteredTags.length > 0 ? filteredTags : ["문제 정의"],
+      tags: filteredTags.length > 0 ? filteredTags : ["기타"],
       improvementPoint: makeShortText(
         analysisResult.improvementPoint ||
           actionSummary ||
@@ -235,11 +225,6 @@ ${feedbackText}
   }
 });
 
-/* =========================
-   Supabase DB API
-========================= */
-
-// 내 피드백만 불러오기
 app.get("/api/feedbacks", async (req, res) => {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -277,7 +262,6 @@ app.get("/api/feedbacks", async (req, res) => {
   }
 });
 
-// 공유 피드백 전체 불러오기
 app.get("/api/shared-feedbacks", async (req, res) => {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -307,7 +291,6 @@ app.get("/api/shared-feedbacks", async (req, res) => {
   }
 });
 
-// 피드백 저장하기
 app.post("/api/feedbacks", async (req, res) => {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -345,11 +328,10 @@ app.post("/api/feedbacks", async (req, res) => {
   }
 });
 
-// 공유 상태 및 공유 방식 변경하기
 app.patch("/api/feedbacks/:id/share", async (req, res) => {
   try {
     const { id } = req.params;
-    const { isShared, shareMode } = req.body;
+    const { isShared, shareMode, tags } = req.body;
 
     const updateData = {
       is_shared: Boolean(isShared),
@@ -361,6 +343,11 @@ app.patch("/api/feedbacks/:id/share", async (req, res) => {
 
     if (!isShared) {
       updateData.share_mode = "summary";
+    }
+
+    if (Array.isArray(tags)) {
+      const filteredTags = tags.filter((tag) => allowedTags.includes(tag));
+      updateData.tags = filteredTags.length > 0 ? filteredTags : ["기타"];
     }
 
     const { data, error } = await supabase
@@ -385,7 +372,6 @@ app.patch("/api/feedbacks/:id/share", async (req, res) => {
   }
 });
 
-// 피드백 삭제하기
 app.delete("/api/feedbacks/:id", async (req, res) => {
   try {
     const { id } = req.params;
