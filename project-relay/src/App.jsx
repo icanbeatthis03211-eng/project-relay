@@ -66,17 +66,17 @@ function App() {
   const feedbackSources = ["튜터", "팀원", "발표 피드백", "자기 회고"];
 
   const tagOptions = [
-    "문제 정의",
-    "타깃 설정",
-    "리서치 근거",
-    "KPI",
-    "우선순위",
-    "발표 흐름",
-    "기능 논리",
-    "문서화",
-    "데이터 해석",ㄴ
-    "사용자 관점",
-  ];
+  "문제 정의",
+  "타깃 설정",
+  "리서치 근거",
+  "KPI",
+  "우선순위",
+  "발표 흐름",
+  "기능 논리",
+  "문서화",
+  "데이터 해석",
+  "사용자 관점",
+];
 
   const fetchFeedbacksFromDB = async () => {
     try {
@@ -350,30 +350,47 @@ function App() {
     }
   };
 
-  const createFeedbackData = () => {
-    const currentTags = getCurrentTags();
-    const currentChecklist = getCurrentChecklist();
-    const { problemText, actionText } = getCurrentProblemAndAction();
+ const createFeedbackData = () => {
+  const currentTags = getCurrentTags();
+  const currentChecklist = getCurrentChecklist();
+  const { problemText, actionText } = getCurrentProblemAndAction();
 
-    return {
-      userId,
-      project: selectedProject || "선택되지 않음",
-      source: selectedSource || "선택되지 않음",
-      text: feedbackText || "입력된 피드백이 없습니다.",
-      summary:
-        analysisResult?.summary || feedbackText || "입력된 피드백이 없습니다.",
-      shareSummary: getShareSummary(),
-      problemSummary: analysisResult?.problemSummary || problemText,
-      actionSummary: analysisResult?.actionSummary || actionText,
-      tags: currentTags,
-      improvementPoint:
-        analysisResult?.improvementPoint ||
-        "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다.",
-      checklist: currentChecklist,
-      isShared: false,
-      shareMode: "summary",
-    };
+  const isAnalyzed = !!analysisResult;
+
+  return {
+    userId,
+    project: selectedProject || "선택되지 않음",
+    source: selectedSource || "선택되지 않음",
+    text: feedbackText || "입력된 피드백이 없습니다.",
+
+    summary: isAnalyzed
+      ? analysisResult.summary
+      : "분석 없이 저장된 피드백입니다. 입력한 피드백 확인해주세요.",
+
+    shareSummary: isAnalyzed
+      ? getShareSummary()
+      : "분석 없이 저장된 피드백입니다. 원문 내용을 기준으로 확인해주세요.",
+
+    problemSummary: isAnalyzed
+      ? analysisResult.problemSummary || problemText
+      : "분석 없이 저장된 피드백입니다.",
+
+    actionSummary: isAnalyzed
+      ? analysisResult.actionSummary || actionText
+      : "원문 메모를 바탕으로 다음 프로젝트에서 다시 확인해주세요.",
+
+    tags: currentTags,
+
+    improvementPoint: isAnalyzed
+      ? analysisResult.improvementPoint ||
+        "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다."
+      : "분석 없이 저장된 피드백입니다. 입력한 피드백을 확인해주세요.",
+
+    checklist: currentChecklist,
+    isShared: false,
+    shareMode: "summary",
   };
+};
 
   const handleSaveFeedback = async () => {
     const newFeedback = createFeedbackData();
@@ -978,7 +995,7 @@ function App() {
                 </div>
 
                 <div className="feedback-section">
-                  <span className="feedback-section-label">원문 메모</span>
+                  <span className="feedback-section-label">입력한 피드백</span>
                   <div className="feedback-content-box feedback-raw-box">
                     <p className="feedback-content-text">{feedback.text}</p>
                   </div>
