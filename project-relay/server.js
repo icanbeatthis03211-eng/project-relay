@@ -65,6 +65,7 @@ const toClientFeedback = (row) => {
     improvementPoint: row.improvement_point,
     checklist: row.checklist || [],
     isShared: row.is_shared,
+    shareMode: row.share_mode || "summary",
     createdAt: row.created_at
       ? new Date(row.created_at).toLocaleDateString("ko-KR")
       : "",
@@ -85,6 +86,7 @@ const toDbFeedback = (feedback) => {
     improvement_point: feedback.improvementPoint || "",
     checklist: Array.isArray(feedback.checklist) ? feedback.checklist : [],
     is_shared: Boolean(feedback.isShared),
+    share_mode: feedback.shareMode || "summary",
   };
 };
 
@@ -343,17 +345,27 @@ app.post("/api/feedbacks", async (req, res) => {
   }
 });
 
-// 공유 상태 변경하기
+// 공유 상태 및 공유 방식 변경하기
 app.patch("/api/feedbacks/:id/share", async (req, res) => {
   try {
     const { id } = req.params;
-    const { isShared } = req.body;
+    const { isShared, shareMode } = req.body;
+
+    const updateData = {
+      is_shared: Boolean(isShared),
+    };
+
+    if (isShared) {
+      updateData.share_mode = shareMode === "full" ? "full" : "summary";
+    }
+
+    if (!isShared) {
+      updateData.share_mode = "summary";
+    }
 
     const { data, error } = await supabase
       .from("feedbacks")
-      .update({
-        is_shared: Boolean(isShared),
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
