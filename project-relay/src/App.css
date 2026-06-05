@@ -432,6 +432,29 @@ button:disabled {
   font-weight: 650;
 }
 
+/* Share option */
+.share-option-box {
+  border-color: rgba(109, 93, 252, 0.28);
+  background: #ffffff;
+}
+
+.share-option-buttons {
+  justify-content: center;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.share-warning {
+  max-width: 100%;
+  padding: 14px 16px;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 /* My feedback card */
 .feedback-card {
   padding: 32px;

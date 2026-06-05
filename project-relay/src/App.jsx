@@ -663,9 +663,9 @@ function App() {
             </p>
           </div>
 
-          <div className="button-row">
-            <button onClick={() => goToPage("input")}>피드백 입력하기</button>
-            <button onClick={() => goToPage("shared")}>공유 피드백 보기</button>
+          <div className="button-row home-action-buttons">
+          <button onClick={() => goToPage("input")}>피드백 입력하기</button>
+          <button onClick={() => goToPage("shared")}>공유 피드백 보기</button>
           </div>
 
           <div className="box">
