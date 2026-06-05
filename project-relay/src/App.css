@@ -136,6 +136,14 @@ li {
   flex-wrap: wrap;
 }
 
+/* Home */
+.home-action-buttons {
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+  margin-bottom: 34px;
+}
+
 button {
   padding: 11px 18px;
   border: 1px solid #d7dce5;
@@ -575,6 +583,11 @@ button:disabled {
 
   .button-row {
     gap: 10px;
+  }
+
+  .home-action-buttons {
+    margin-top: 24px;
+    margin-bottom: 28px;
   }
 
   .search-bar {
