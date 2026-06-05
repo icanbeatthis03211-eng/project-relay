@@ -396,6 +396,13 @@ function App() {
     return getChecklistItems(getCurrentTags());
   };
 
+  const isQuickSavedFeedback = (feedback) => {
+    return (
+      feedback?.summary?.includes("GPT 분석 없이 저장된 피드백입니다") ||
+      feedback?.problemSummary?.includes("GPT 분석 없이 저장된 피드백입니다")
+    );
+  };
+
   const handleAnalyzeFeedback = async () => {
     if (feedbackText.trim() === "") {
       alert("분석할 피드백을 먼저 입력해 주세요.");
@@ -556,6 +563,11 @@ function App() {
   const handleShareSavedFeedback = async (feedback, shareMode = "summary") => {
     if (feedback.isShared) {
       alert("이미 공유된 피드백입니다.");
+      return;
+    }
+
+    if (isQuickSavedFeedback(feedback) && shareMode === "summary") {
+      alert("GPT 분석 없이 저장된 피드백은 원문 포함 공유만 가능합니다.");
       return;
     }
 
@@ -1236,15 +1248,25 @@ function App() {
                 공유하는 것을 추천합니다.
               </p>
 
+              {isQuickSavedFeedback(shareTargetFeedback) && (
+                <p className="share-warning">
+                  이 피드백은 GPT 분석 없이 저장되어 별도 요약이 없습니다.
+                  공유하려면 원문 포함 공유를 선택해주세요.
+                </p>
+              )}
+
               <div className="shared-summary">
-                <div className="summary-block problem">
-                  <span className="summary-label">요약 공유 미리보기</span>
-                  <p className="summary-text">
-                    {shareTargetFeedback.problemSummary ||
-                      shareTargetFeedback.summary ||
-                      "요약된 피드백이 없습니다."}
-                  </p>
-                </div>
+                {!isQuickSavedFeedback(shareTargetFeedback) && (
+                  <div className="summary-block problem">
+                    <span className="summary-label">요약 공유 미리보기</span>
+                    <p className="summary-text">
+                      {shareTargetFeedback.problemSummary ||
+                        shareTargetFeedback.shareSummary ||
+                        shareTargetFeedback.summary ||
+                        "요약된 피드백이 없습니다."}
+                    </p>
+                  </div>
+                )}
 
                 <div className="summary-block action">
                   <span className="summary-label">
@@ -1256,19 +1278,23 @@ function App() {
                 </div>
               </div>
 
-              <p className="share-warning">
-                요약만 공유하면 핵심 문제와 태그 중심으로 공개되고, 원문 포함
-                공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
-              </p>
+              {!isQuickSavedFeedback(shareTargetFeedback) && (
+                <p className="share-warning">
+                  요약만 공유하면 핵심 문제와 태그 중심으로 공개되고, 원문 포함
+                  공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
+                </p>
+              )}
 
               <div className="button-row share-option-buttons">
-                <button
-                  onClick={() =>
-                    handleShareSavedFeedback(shareTargetFeedback, "summary")
-                  }
-                >
-                  요약만 공유하기
-                </button>
+                {!isQuickSavedFeedback(shareTargetFeedback) && (
+                  <button
+                    onClick={() =>
+                      handleShareSavedFeedback(shareTargetFeedback, "summary")
+                    }
+                  >
+                    요약만 공유하기
+                  </button>
+                )}
 
                 <button
                   onClick={() =>
@@ -1385,8 +1411,9 @@ function App() {
                     <div className="shared-card-header">
                       <span className="project-chip">{feedback.project}</span>
 
+                      <span className="feedback-section-label">공유 요약</span>
                       <h2 className="card-eyebrow">
-                        {feedback.summary || "요약된 피드백이 없습니다."}
+                        {problemText || "요약된 피드백이 없습니다."}
                       </h2>
 
                       <div className="tag-row">
