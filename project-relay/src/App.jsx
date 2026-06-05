@@ -66,17 +66,18 @@ function App() {
   const feedbackSources = ["튜터", "팀원", "발표 피드백", "자기 회고"];
 
   const tagOptions = [
-  "문제 정의",
-  "타깃 설정",
-  "리서치 근거",
-  "KPI",
-  "우선순위",
-  "발표 흐름",
-  "기능 논리",
-  "문서화",
-  "데이터 해석",
-  "사용자 관점",
-];
+    "문제 정의",
+    "타깃 설정",
+    "리서치 근거",
+    "KPI",
+    "우선순위",
+    "발표 흐름",
+    "기능 논리",
+    "문서화",
+    "데이터 해석",
+    "사용자 관점",
+    "비즈니스 관점",
+  ];
 
   const fetchFeedbacksFromDB = async () => {
     try {
@@ -149,43 +150,122 @@ function App() {
       tags.push("문제 정의");
     }
 
-    if (text.includes("타깃") || text.includes("사용자")) {
+    if (
+      text.includes("타깃") ||
+      text.includes("대상") ||
+      text.includes("고객군")
+    ) {
       tags.push("타깃 설정");
     }
 
-    if (text.includes("KPI") || text.includes("지표")) {
-      tags.push("KPI");
-    }
-
-    if (text.includes("우선순위")) {
-      tags.push("우선순위");
-    }
-
-    if (text.includes("근거") || text.includes("리서치")) {
+    if (
+      text.includes("근거") ||
+      text.includes("리서치") ||
+      text.includes("자료") ||
+      text.includes("조사")
+    ) {
       tags.push("리서치 근거");
     }
 
-    if (text.includes("발표") || text.includes("흐름")) {
+    if (
+      text.includes("KPI") ||
+      text.includes("지표") ||
+      text.includes("성과")
+    ) {
+      tags.push("KPI");
+    }
+
+    if (
+      text.includes("우선순위") ||
+      text.includes("중요도") ||
+      text.includes("먼저")
+    ) {
+      tags.push("우선순위");
+    }
+
+    if (
+      text.includes("발표") ||
+      text.includes("흐름") ||
+      text.includes("전개") ||
+      text.includes("스토리")
+    ) {
       tags.push("발표 흐름");
+    }
+
+    if (
+      text.includes("기능") ||
+      text.includes("논리") ||
+      text.includes("해결안") ||
+      text.includes("솔루션")
+    ) {
+      tags.push("기능 논리");
+    }
+
+    if (
+      text.includes("문서") ||
+      text.includes("정책서") ||
+      text.includes("요구사항") ||
+      text.includes("PRD") ||
+      text.includes("명세") ||
+      text.includes("정리") ||
+      text.includes("예외 케이스")
+    ) {
+      tags.push("문서화");
+    }
+
+    if (
+      text.includes("데이터") ||
+      text.includes("해석") ||
+      text.includes("분석") ||
+      text.includes("인사이트")
+    ) {
+      tags.push("데이터 해석");
+    }
+
+    if (
+      text.includes("사용자") ||
+      text.includes("유저") ||
+      text.includes("고객") ||
+      text.includes("니즈") ||
+      text.includes("불편")
+    ) {
+      tags.push("사용자 관점");
+    }
+
+    if (
+      text.includes("회사") ||
+      text.includes("비즈니스") ||
+      text.includes("사업") ||
+      text.includes("수익") ||
+      text.includes("운영") ||
+      text.includes("시장") ||
+      text.includes("비용") ||
+      text.includes("매출")
+    ) {
+      tags.push("비즈니스 관점");
     }
 
     if (tags.length === 0) {
       tags.push("문제 정의");
     }
 
-    return tags;
+    return [...new Set(tags)];
   };
 
   const getChecklistItems = (tags) => {
     const checklist = [];
 
     if (tags.includes("문제 정의")) {
-      checklist.push("타깃 사용자를 한 문장으로 정의했는가?");
-      checklist.push("해결하려는 문제가 특정 상황에서 발생하는가?");
+      checklist.push("해결하려는 문제를 한 문장으로 명확하게 정의했는가?");
+      checklist.push("문제가 발생하는 상황과 맥락이 구체적인가?");
     }
 
     if (tags.includes("타깃 설정")) {
-      checklist.push("타깃 사용자의 상황과 니즈가 구체적인가?");
+      checklist.push("타깃 사용자의 상황과 니즈가 구체적으로 정의되어 있는가?");
+    }
+
+    if (tags.includes("리서치 근거")) {
+      checklist.push("주장마다 최소 1개 이상의 근거 자료가 연결되어 있는가?");
     }
 
     if (tags.includes("KPI")) {
@@ -193,37 +273,43 @@ function App() {
     }
 
     if (tags.includes("우선순위")) {
-      checklist.push("우선순위를 판단하는 기준을 정했는가?");
-    }
-
-    if (tags.includes("리서치 근거")) {
-      checklist.push("주장마다 최소 1개 이상의 근거 자료가 있는가?");
+      checklist.push("기능이나 문제의 우선순위를 판단하는 기준이 명확한가?");
     }
 
     if (tags.includes("발표 흐름")) {
-      checklist.push("Problem → Insight → Solution 흐름이 유지되는가?");
+      checklist.push("Problem → Insight → Solution 흐름이 자연스럽게 이어지는가?");
     }
 
     if (tags.includes("기능 논리")) {
-      checklist.push("기능이 문제 해결 흐름과 직접 연결되는가?");
+      checklist.push("기능이 문제 해결 흐름과 직접 연결되어 있는가?");
     }
 
-    if (tags.includes("장표 표현")) {
-      checklist.push("핵심 메시지가 장표에서 한눈에 보이는가?");
+    if (tags.includes("문서화")) {
+      checklist.push(
+        "PRD, 정책, 요구사항, 예외 케이스가 문서에 명확히 정리되어 있는가?"
+      );
     }
 
     if (tags.includes("데이터 해석")) {
-      checklist.push("데이터를 단순 나열하지 않고 인사이트로 해석했는가?");
+      checklist.push(
+        "데이터를 단순 나열하지 않고 의사결정 가능한 인사이트로 해석했는가?"
+      );
     }
 
     if (tags.includes("사용자 관점")) {
       checklist.push(
-        "공급자 관점이 아니라 사용자 행동과 니즈를 기준으로 설명했는가?"
+        "사용자의 행동, 니즈, 불편을 기준으로 문제와 해결안을 설명했는가?"
+      );
+    }
+
+    if (tags.includes("비즈니스 관점")) {
+      checklist.push(
+        "회사의 목표, 운영 효율, 수익성 등 비즈니스 관점의 타당성을 함께 고려했는가?"
       );
     }
 
     if (checklist.length === 0) {
-      checklist.push("다음 프로젝트에서 다시 확인할 포인트를 정리했는가?");
+      checklist.push("다음 프로젝트에서 다시 확인할 개선 포인트를 정리했는가?");
     }
 
     return [...new Set(checklist)];
@@ -350,49 +436,89 @@ function App() {
     }
   };
 
- const createFeedbackData = () => {
-  const currentTags = getCurrentTags();
-  const currentChecklist = getCurrentChecklist();
-  const { problemText, actionText } = getCurrentProblemAndAction();
+  const createFeedbackData = () => {
+    const currentTags = getCurrentTags();
+    const currentChecklist = getCurrentChecklist();
+    const { problemText, actionText } = getCurrentProblemAndAction();
 
-  const isAnalyzed = !!analysisResult;
+    const isAnalyzed = !!analysisResult;
 
-  return {
-    userId,
-    project: selectedProject || "선택되지 않음",
-    source: selectedSource || "선택되지 않음",
-    text: feedbackText || "입력된 피드백이 없습니다.",
+    return {
+      userId,
+      project: selectedProject || "선택되지 않음",
+      source: selectedSource || "선택되지 않음",
+      text: feedbackText || "입력된 피드백이 없습니다.",
 
-    summary: isAnalyzed
-      ? analysisResult.summary
-      : "분석 없이 저장된 피드백입니다. 입력한 피드백 확인해주세요.",
+      summary: isAnalyzed
+        ? analysisResult.summary
+        : "GPT 분석 없이 저장된 피드백입니다. 입력한 피드백을 확인해주세요.",
 
-    shareSummary: isAnalyzed
-      ? getShareSummary()
-      : "분석 없이 저장된 피드백입니다. 원문 내용을 기준으로 확인해주세요.",
+      shareSummary: isAnalyzed
+        ? getShareSummary()
+        : "GPT 분석 없이 저장된 피드백입니다. 입력한 피드백을 기준으로 확인해주세요.",
 
-    problemSummary: isAnalyzed
-      ? analysisResult.problemSummary || problemText
-      : "분석 없이 저장된 피드백입니다.",
+      problemSummary: isAnalyzed
+        ? analysisResult.problemSummary || problemText
+        : "GPT 분석 없이 저장된 피드백입니다.",
 
-    actionSummary: isAnalyzed
-      ? analysisResult.actionSummary || actionText
-      : "원문 메모를 바탕으로 다음 프로젝트에서 다시 확인해주세요.",
+      actionSummary: isAnalyzed
+        ? analysisResult.actionSummary || actionText
+        : "입력한 피드백을 바탕으로 다음 프로젝트에서 다시 확인해주세요.",
 
-    tags: currentTags,
+      tags: currentTags,
 
-    improvementPoint: isAnalyzed
-      ? analysisResult.improvementPoint ||
-        "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다."
-      : "분석 없이 저장된 피드백입니다. 입력한 피드백을 확인해주세요.",
+      improvementPoint: isAnalyzed
+        ? analysisResult.improvementPoint ||
+          "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다."
+        : "GPT 분석 없이 저장된 피드백입니다. 입력한 피드백을 확인해주세요.",
 
-    checklist: currentChecklist,
-    isShared: false,
-    shareMode: "summary",
+      checklist: currentChecklist,
+      isShared: false,
+      shareMode: "summary",
+    };
   };
-};
 
   const handleSaveFeedback = async () => {
+    const newFeedback = createFeedbackData();
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/feedbacks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newFeedback),
+      });
+
+      const savedFeedback = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
+        );
+      }
+
+      setFeedbackList([savedFeedback, ...feedbackList]);
+
+      setFeedbackText("");
+      setSelectedProject("");
+      setSelectedSource("");
+      setAnalysisResult(null);
+      setAnalysisError("");
+
+      goToPage("log");
+    } catch (error) {
+      console.error(error);
+      alert(`피드백 저장에 실패했습니다: ${error.message}`);
+    }
+  };
+
+  const handleSaveWithoutAnalysis = async () => {
+    if (feedbackText.trim() === "") {
+      alert("저장할 피드백을 먼저 입력해 주세요.");
+      return;
+    }
+
     const newFeedback = createFeedbackData();
 
     try {
@@ -698,11 +824,11 @@ function App() {
           </div>
 
           <div className="box">
-            <h2>전체 반복 피드백 TOP 3</h2>
+            <h2>공유 피드백 반복 TOP 3</h2>
             {sharedFeedbackList.length === 0 ? (
               <p>
-                아직 공유된 피드백이 없습니다. 피드백을 공유하면 이 영역이
-                자동으로 업데이트됩니다.
+                아직 공유된 피드백이 없습니다. 사용자가 피드백을 익명 공유하면
+                반복되는 약점 태그가 이곳에 집계됩니다.
               </p>
             ) : (
               <ol>
@@ -787,6 +913,11 @@ function App() {
             <button onClick={handleAnalyzeFeedback} disabled={isAnalyzing}>
               {isAnalyzing ? "분석 중..." : "GPT로 피드백 분석하기"}
             </button>
+
+            <button onClick={handleSaveWithoutAnalysis} disabled={isAnalyzing}>
+              분석 없이 바로 저장하기
+            </button>
+
             <button onClick={handleResetInput}>초기화하기</button>
           </div>
         </section>
@@ -1120,7 +1251,7 @@ function App() {
                     원문 포함 공유 시 공개되는 내용
                   </span>
                   <p className="summary-text">
-                    {shareTargetFeedback.text || "원문 피드백이 없습니다."}
+                    {shareTargetFeedback.text || "입력한 피드백이 없습니다."}
                   </p>
                 </div>
               </div>
