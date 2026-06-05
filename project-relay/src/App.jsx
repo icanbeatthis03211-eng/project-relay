@@ -35,6 +35,8 @@ function App() {
   const [selectedFeedbackForChecklist, setSelectedFeedbackForChecklist] =
     useState(null);
 
+  const [shareTargetFeedback, setShareTargetFeedback] = useState(null);
+
   const [showPatternChecklist, setShowPatternChecklist] = useState(false);
   const [selectedPatternProject, setSelectedPatternProject] = useState("전체");
 
@@ -132,6 +134,7 @@ function App() {
 
     if (nextPage !== "log") {
       setSelectedFeedbackForChecklist(null);
+      setShareTargetFeedback(null);
     }
 
     if (nextPage !== "pattern") {
@@ -368,6 +371,7 @@ function App() {
         "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다.",
       checklist: currentChecklist,
       isShared: false,
+      shareMode: "summary",
     };
   };
 
@@ -406,7 +410,7 @@ function App() {
     }
   };
 
-  const handleShareSavedFeedback = async (feedback) => {
+  const handleShareSavedFeedback = async (feedback, shareMode = "summary") => {
     if (feedback.isShared) {
       alert("이미 공유된 피드백입니다.");
       return;
@@ -422,6 +426,7 @@ function App() {
           },
           body: JSON.stringify({
             isShared: true,
+            shareMode,
           }),
         }
       );
@@ -441,6 +446,7 @@ function App() {
       );
 
       setSharedFeedbackList([updatedFeedback, ...sharedFeedbackList]);
+      setShareTargetFeedback(null);
 
       goToPage("shared");
     } catch (error) {
@@ -468,6 +474,10 @@ function App() {
 
       if (selectedFeedbackForChecklist?.id === id) {
         setSelectedFeedbackForChecklist(null);
+      }
+
+      if (shareTargetFeedback?.id === id) {
+        setShareTargetFeedback(null);
       }
     } catch (error) {
       console.error(error);
@@ -544,6 +554,7 @@ function App() {
         )
       );
       setSelectedFeedbackForChecklist(null);
+      setShareTargetFeedback(null);
       setCheckedChecklistItems({});
 
       localStorage.removeItem("projectRelayChecklistState");
@@ -653,19 +664,20 @@ function App() {
           <div className="box">
             <h2>다른 사람은 어떤 피드백을 받았을까요?</h2>
             <p>
-              Project Relay는 부트캠프 수강생들이 받은 피드백을 익명으로 공유하고,
-              반복해서 등장하는 약점을 함께 확인하는 서비스입니다.
-              내가 놓친 문제를 다른 사람의 피드백에서 미리 발견하고,
-              다음 프로젝트 체크리스트로 연결할 수 있습니다.
+              Project Relay는 부트캠프 수강생들이 받은 피드백을 익명으로
+              공유하고, 반복해서 등장하는 약점을 함께 확인하는 서비스입니다.
+              내가 놓친 문제를 다른 사람의 피드백에서 미리 발견하고, 다음
+              프로젝트 체크리스트로 연결할 수 있습니다.
             </p>
-              <p className="selected-info">
-              내 기록은 나에게만 보이며, 공유를 선택한 피드백만 익명으로 공개됩니다.
+            <p className="selected-info">
+              내 기록은 나에게만 보이며, 공유를 선택한 피드백만 익명으로
+              공개됩니다.
             </p>
           </div>
 
           <div className="button-row home-action-buttons">
-          <button onClick={() => goToPage("input")}>피드백 입력하기</button>
-          <button onClick={() => goToPage("shared")}>공유 피드백 보기</button>
+            <button onClick={() => goToPage("input")}>피드백 입력하기</button>
+            <button onClick={() => goToPage("shared")}>공유 피드백 보기</button>
           </div>
 
           <div className="box">
@@ -1017,7 +1029,7 @@ function App() {
                     삭제하기
                   </button>
 
-                  <button onClick={() => handleShareSavedFeedback(feedback)}>
+                  <button onClick={() => setShareTargetFeedback(feedback)}>
                     익명 공유하기
                   </button>
 
@@ -1063,6 +1075,64 @@ function App() {
                     </label>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {shareTargetFeedback && (
+            <div className="box share-option-box">
+              <h2>공유 방식을 선택해주세요</h2>
+              <p>
+                이 피드백을 다른 사용자에게 익명으로 공유합니다. 개인 이름,
+                팀명, 회사명 등 식별 가능한 정보가 포함되어 있다면 요약만
+                공유하는 것을 추천합니다.
+              </p>
+
+              <div className="shared-summary">
+                <div className="summary-block problem">
+                  <span className="summary-label">요약 공유 미리보기</span>
+                  <p className="summary-text">
+                    {shareTargetFeedback.problemSummary ||
+                      shareTargetFeedback.summary ||
+                      "요약된 피드백이 없습니다."}
+                  </p>
+                </div>
+
+                <div className="summary-block action">
+                  <span className="summary-label">
+                    원문 포함 공유 시 공개되는 내용
+                  </span>
+                  <p className="summary-text">
+                    {shareTargetFeedback.text || "원문 피드백이 없습니다."}
+                  </p>
+                </div>
+              </div>
+
+              <p className="share-warning">
+                요약만 공유하면 핵심 문제와 태그 중심으로 공개되고, 원문 포함
+                공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
+              </p>
+
+              <div className="button-row share-option-buttons">
+                <button
+                  onClick={() =>
+                    handleShareSavedFeedback(shareTargetFeedback, "summary")
+                  }
+                >
+                  요약만 공유하기
+                </button>
+
+                <button
+                  onClick={() =>
+                    handleShareSavedFeedback(shareTargetFeedback, "full")
+                  }
+                >
+                  원문 포함 공유하기
+                </button>
+
+                <button onClick={() => setShareTargetFeedback(null)}>
+                  취소
+                </button>
               </div>
             </div>
           )}
@@ -1152,7 +1222,10 @@ function App() {
             <>
               <div className="box">
                 <h2>공유된 피드백 목록</h2>
-                <p>저장된 피드백 중 익명 공유한 항목만 이곳에 표시됩니다.</p>
+                <p>
+                  저장된 피드백 중 익명 공유한 항목만 이곳에 표시됩니다. 원문
+                  포함 공유를 선택한 피드백은 원문도 함께 표시됩니다.
+                </p>
               </div>
 
               {filteredSharedFeedbackList.map((feedback) => {
@@ -1183,6 +1256,19 @@ function App() {
                         <p className="summary-text">{problemText}</p>
                       </div>
                     </div>
+
+                    {feedback.shareMode === "full" && (
+                      <div className="feedback-section">
+                        <span className="feedback-section-label">
+                          공유된 원문 피드백
+                        </span>
+                        <div className="feedback-content-box feedback-raw-box">
+                          <p className="feedback-content-text">
+                            {feedback.text}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="button-row">
                       <button
