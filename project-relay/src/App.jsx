@@ -18,6 +18,7 @@ const getOrCreateUserId = () => {
 
 function App() {
   const [page, setPage] = useState("home");
+  const [showHomeNotice, setShowHomeNotice] = useState(true);
 
   const [userId] = useState(() => getOrCreateUserId());
 
@@ -31,12 +32,10 @@ function App() {
 
   const [feedbackList, setFeedbackList] = useState([]);
   const [sharedFeedbackList, setSharedFeedbackList] = useState([]);
+  const [pendingShare, setPendingShare] = useState(null);
 
   const [selectedFeedbackForChecklist, setSelectedFeedbackForChecklist] =
     useState(null);
-
-  const [shareTargetFeedback, setShareTargetFeedback] = useState(null);
-  const [shareSelectedTags, setShareSelectedTags] = useState([]);
 
   const [showPatternChecklist, setShowPatternChecklist] = useState(false);
   const [selectedPatternProject, setSelectedPatternProject] = useState("전체");
@@ -74,11 +73,9 @@ function App() {
     "우선순위",
     "발표 흐름",
     "기능 논리",
-    "문서화",
+    "장표 표현",
     "데이터 해석",
     "사용자 관점",
-    "비즈니스 관점",
-    "기타",
   ];
 
   const fetchFeedbacksFromDB = async () => {
@@ -92,6 +89,7 @@ function App() {
       }
 
       const data = await response.json();
+
       setFeedbackList(data);
     } catch (error) {
       console.error(error);
@@ -108,6 +106,7 @@ function App() {
       }
 
       const data = await response.json();
+
       setSharedFeedbackList(data);
     } catch (error) {
       console.error(error);
@@ -135,32 +134,11 @@ function App() {
 
     if (nextPage !== "log") {
       setSelectedFeedbackForChecklist(null);
-      setShareTargetFeedback(null);
-      setShareSelectedTags([]);
     }
 
     if (nextPage !== "pattern") {
       setShowPatternChecklist(false);
     }
-  };
-
-  const validateFeedbackInput = () => {
-    if (!selectedProject) {
-      alert("프로젝트 유형을 선택해 주세요.");
-      return false;
-    }
-
-    if (feedbackText.trim() === "") {
-      alert("피드백 내용을 입력해 주세요.");
-      return false;
-    }
-
-    if (!selectedSource) {
-      alert("피드백 출처를 선택해 주세요.");
-      return false;
-    }
-
-    return true;
   };
 
   const getTags = (text) => {
@@ -170,122 +148,43 @@ function App() {
       tags.push("문제 정의");
     }
 
-    if (
-      text.includes("타깃") ||
-      text.includes("대상") ||
-      text.includes("고객군")
-    ) {
+    if (text.includes("타깃") || text.includes("사용자")) {
       tags.push("타깃 설정");
     }
 
-    if (
-      text.includes("근거") ||
-      text.includes("리서치") ||
-      text.includes("자료") ||
-      text.includes("조사")
-    ) {
-      tags.push("리서치 근거");
-    }
-
-    if (
-      text.includes("KPI") ||
-      text.includes("지표") ||
-      text.includes("성과")
-    ) {
+    if (text.includes("KPI") || text.includes("지표")) {
       tags.push("KPI");
     }
 
-    if (
-      text.includes("우선순위") ||
-      text.includes("중요도") ||
-      text.includes("먼저")
-    ) {
+    if (text.includes("우선순위")) {
       tags.push("우선순위");
     }
 
-    if (
-      text.includes("발표") ||
-      text.includes("흐름") ||
-      text.includes("전개") ||
-      text.includes("스토리")
-    ) {
+    if (text.includes("근거") || text.includes("리서치")) {
+      tags.push("리서치 근거");
+    }
+
+    if (text.includes("발표") || text.includes("흐름")) {
       tags.push("발표 흐름");
     }
 
-    if (
-      text.includes("기능") ||
-      text.includes("논리") ||
-      text.includes("해결안") ||
-      text.includes("솔루션")
-    ) {
-      tags.push("기능 논리");
-    }
-
-    if (
-      text.includes("문서") ||
-      text.includes("정책서") ||
-      text.includes("요구사항") ||
-      text.includes("PRD") ||
-      text.includes("명세") ||
-      text.includes("정리") ||
-      text.includes("예외 케이스")
-    ) {
-      tags.push("문서화");
-    }
-
-    if (
-      text.includes("데이터") ||
-      text.includes("해석") ||
-      text.includes("분석") ||
-      text.includes("인사이트")
-    ) {
-      tags.push("데이터 해석");
-    }
-
-    if (
-      text.includes("사용자") ||
-      text.includes("유저") ||
-      text.includes("고객") ||
-      text.includes("니즈") ||
-      text.includes("불편")
-    ) {
-      tags.push("사용자 관점");
-    }
-
-    if (
-      text.includes("회사") ||
-      text.includes("비즈니스") ||
-      text.includes("사업") ||
-      text.includes("수익") ||
-      text.includes("운영") ||
-      text.includes("시장") ||
-      text.includes("비용") ||
-      text.includes("매출")
-    ) {
-      tags.push("비즈니스 관점");
-    }
-
     if (tags.length === 0) {
-      tags.push("기타");
+      tags.push("문제 정의");
     }
 
-    return [...new Set(tags)];
+    return tags;
   };
 
   const getChecklistItems = (tags) => {
     const checklist = [];
 
     if (tags.includes("문제 정의")) {
-      checklist.push("해결하려는 문제를 한 문장으로 명확하게 정의했는가?");
-      checklist.push("문제가 발생하는 상황과 맥락이 구체적인가?");
+      checklist.push("타깃 사용자를 한 문장으로 정의했는가?");
+      checklist.push("해결하려는 문제가 특정 상황에서 발생하는가?");
     }
 
     if (tags.includes("타깃 설정")) {
-      checklist.push("타깃 사용자의 상황과 니즈가 구체적으로 정의되어 있는가?");
-    }
-
-    if (tags.includes("리서치 근거")) {
-      checklist.push("주장마다 최소 1개 이상의 근거 자료가 연결되어 있는가?");
+      checklist.push("타깃 사용자의 상황과 니즈가 구체적인가?");
     }
 
     if (tags.includes("KPI")) {
@@ -293,49 +192,37 @@ function App() {
     }
 
     if (tags.includes("우선순위")) {
-      checklist.push("기능이나 문제의 우선순위를 판단하는 기준이 명확한가?");
+      checklist.push("우선순위를 판단하는 기준을 정했는가?");
+    }
+
+    if (tags.includes("리서치 근거")) {
+      checklist.push("주장마다 최소 1개 이상의 근거 자료가 있는가?");
     }
 
     if (tags.includes("발표 흐름")) {
-      checklist.push(
-        "Problem → Insight → Solution 흐름이 자연스럽게 이어지는가?"
-      );
+      checklist.push("Problem → Insight → Solution 흐름이 유지되는가?");
     }
 
     if (tags.includes("기능 논리")) {
-      checklist.push("기능이 문제 해결 흐름과 직접 연결되어 있는가?");
+      checklist.push("기능이 문제 해결 흐름과 직접 연결되는가?");
     }
 
-    if (tags.includes("문서화")) {
-      checklist.push(
-        "PRD, 정책, 요구사항, 예외 케이스가 문서에 명확히 정리되어 있는가?"
-      );
+    if (tags.includes("장표 표현")) {
+      checklist.push("핵심 메시지가 장표에서 한눈에 보이는가?");
     }
 
     if (tags.includes("데이터 해석")) {
-      checklist.push(
-        "데이터를 단순 나열하지 않고 의사결정 가능한 인사이트로 해석했는가?"
-      );
+      checklist.push("데이터를 단순 나열하지 않고 인사이트로 해석했는가?");
     }
 
     if (tags.includes("사용자 관점")) {
       checklist.push(
-        "사용자의 행동, 니즈, 불편을 기준으로 문제와 해결안을 설명했는가?"
+        "공급자 관점이 아니라 사용자 행동과 니즈를 기준으로 설명했는가?"
       );
-    }
-
-    if (tags.includes("비즈니스 관점")) {
-      checklist.push(
-        "회사의 목표, 운영 효율, 수익성 등 비즈니스 관점의 타당성을 함께 고려했는가?"
-      );
-    }
-
-    if (tags.includes("기타")) {
-      checklist.push("피드백의 핵심 문제를 직접 다시 정리했는가?");
     }
 
     if (checklist.length === 0) {
-      checklist.push("다음 프로젝트에서 다시 확인할 개선 포인트를 정리했는가?");
+      checklist.push("다음 프로젝트에서 다시 확인할 포인트를 정리했는가?");
     }
 
     return [...new Set(checklist)];
@@ -349,11 +236,18 @@ function App() {
       .replace(/요약[:：]?/g, "")
       .trim();
 
-    if (cleanedText.length <= 160) {
-      return cleanedText;
+    const sentences = cleanedText
+      .split(/(?<=[.!?。！？다요함됨임음])\s+/)
+      .filter(Boolean);
+
+    const twoSentenceSummary = sentences.slice(0, 2).join(" ");
+    const summarySource = twoSentenceSummary || cleanedText;
+
+    if (summarySource.length <= 160) {
+      return summarySource;
     }
 
-    return `${cleanedText.slice(0, 157)}...`;
+    return `${summarySource.slice(0, 157)}...`;
   };
 
   const getShareSummary = () => {
@@ -415,40 +309,21 @@ function App() {
     return getChecklistItems(getCurrentTags());
   };
 
-  const isQuickSavedFeedback = (feedback) => {
-    return (
-      feedback?.summary?.includes("GPT 분석 없이 저장된 피드백입니다") ||
-      feedback?.problemSummary?.includes("GPT 분석 없이 저장된 피드백입니다")
-    );
-  };
-
-  const toggleShareTag = (tag) => {
-    setShareSelectedTags((prev) =>
-      prev.includes(tag)
-        ? prev.filter((item) => item !== tag)
-        : [...prev, tag]
-    );
-  };
-
-  const closeShareBox = () => {
-    setShareTargetFeedback(null);
-    setShareSelectedTags([]);
-  };
-
-  const openShareBox = (feedback) => {
-    if (shareTargetFeedback?.id === feedback.id) {
-      closeShareBox();
-      return;
-    }
-
-    setShareTargetFeedback(feedback);
-    setShareSelectedTags([]);
-  };
-
   const handleAnalyzeFeedback = async () => {
-    if (!validateFeedbackInput()) {
-      return;
-    }
+  if (!selectedProject) {
+    alert("프로젝트 유형을 먼저 선택해 주세요.");
+    return;
+  }
+
+  if (feedbackText.trim() === "") {
+    alert("분석할 피드백을 먼저 입력해 주세요.");
+    return;
+  }
+
+  if (!selectedSource) {
+    alert("피드백 출처를 먼저 선택해 주세요.");
+    return;
+  }
 
     setIsAnalyzing(true);
     setAnalysisError("");
@@ -489,44 +364,44 @@ function App() {
     const currentChecklist = getCurrentChecklist();
     const { problemText, actionText } = getCurrentProblemAndAction();
 
-    const isAnalyzed = !!analysisResult;
-
     return {
       userId,
-      project: selectedProject,
-      source: selectedSource,
-      text: feedbackText,
-
-      summary: isAnalyzed
-        ? analysisResult.summary
-        : "GPT 분석 없이 저장된 피드백입니다. 입력한 피드백을 확인해주세요.",
-
-      shareSummary: isAnalyzed
-        ? getShareSummary()
-        : "GPT 분석 없이 저장된 피드백입니다. 입력한 피드백을 기준으로 확인해주세요.",
-
-      problemSummary: isAnalyzed
-        ? analysisResult.problemSummary || problemText
-        : "GPT 분석 없이 저장된 피드백입니다.",
-
-      actionSummary: isAnalyzed
-        ? analysisResult.actionSummary || actionText
-        : "입력한 피드백을 바탕으로 다음 프로젝트에서 다시 확인해주세요.",
-
+      project: selectedProject || "선택되지 않음",
+      source: selectedSource || "선택되지 않음",
+      text: feedbackText || "입력된 피드백이 없습니다.",
+      summary:
+        analysisResult?.summary || feedbackText || "입력된 피드백이 없습니다.",
+      shareSummary: getShareSummary(),
+      problemSummary: analysisResult?.problemSummary || problemText,
+      actionSummary: analysisResult?.actionSummary || actionText,
       tags: currentTags,
-
-      improvementPoint: isAnalyzed
-        ? analysisResult.improvementPoint ||
-          "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다."
-        : "GPT 분석 없이 저장된 피드백입니다. 입력한 피드백을 확인해주세요.",
-
+      improvementPoint:
+        analysisResult?.improvementPoint ||
+        "다음 프로젝트에서 다시 확인해야 할 개선 포인트입니다.",
       checklist: currentChecklist,
       isShared: false,
-      shareMode: "summary",
     };
   };
 
-  const saveFeedbackToDB = async (newFeedback) => {
+  const handleSaveFeedback = async () => {
+  if (!selectedProject) {
+    alert("프로젝트 유형을 먼저 선택해 주세요.");
+    return;
+  }
+
+  if (feedbackText.trim() === "") {
+    alert("저장할 피드백 내용을 입력해 주세요.");
+    return;
+  }
+
+  if (!selectedSource) {
+    alert("피드백 출처를 먼저 선택해 주세요.");
+    return;
+  }
+
+  const newFeedback = createFeedbackData();
+
+  try {
     const response = await fetch(`${API_BASE_URL}/api/feedbacks`, {
       method: "POST",
       headers: {
@@ -535,74 +410,40 @@ function App() {
       body: JSON.stringify(newFeedback),
     });
 
-    const savedFeedback = await response.json();
+      const savedFeedback = await response.json();
 
-    if (!response.ok) {
-      throw new Error(
-        savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
-      );
-    }
+      if (!response.ok) {
+        throw new Error(
+          savedFeedback.error || "DB에 피드백을 저장하지 못했습니다."
+        );
+      }
 
-    setFeedbackList([savedFeedback, ...feedbackList]);
+      setFeedbackList([savedFeedback, ...feedbackList]);
 
-    setFeedbackText("");
-    setSelectedProject("");
-    setSelectedSource("");
-    setAnalysisResult(null);
-    setAnalysisError("");
+      setFeedbackText("");
+      setSelectedProject("");
+      setSelectedSource("");
+      setAnalysisResult(null);
+      setAnalysisError("");
 
-    goToPage("log");
-  };
-
-  const handleSaveFeedback = async () => {
-    if (!validateFeedbackInput()) {
-      return;
-    }
-
-    const newFeedback = createFeedbackData();
-
-    try {
-      await saveFeedbackToDB(newFeedback);
+      goToPage("log");
     } catch (error) {
       console.error(error);
       alert(`피드백 저장에 실패했습니다: ${error.message}`);
     }
   };
 
-  const handleSaveWithoutAnalysis = async () => {
-    if (!validateFeedbackInput()) {
-      return;
-    }
-
-    const newFeedback = createFeedbackData();
-
-    try {
-      await saveFeedbackToDB(newFeedback);
-    } catch (error) {
-      console.error(error);
-      alert(`피드백 저장에 실패했습니다: ${error.message}`);
-    }
-  };
-
-  const handleShareSavedFeedback = async (feedback, shareMode = "summary") => {
+  const handleShareSavedFeedback = (feedback) => {
     if (feedback.isShared) {
       alert("이미 공유된 피드백입니다.");
       return;
     }
 
-    const isQuick = isQuickSavedFeedback(feedback);
+    setPendingShare(feedback);
+  };
 
-    if (isQuick && shareMode === "summary") {
-      alert("GPT 분석 없이 저장된 피드백은 원문 포함 공유만 가능합니다.");
-      return;
-    }
-
-    if (isQuick && shareSelectedTags.length === 0) {
-      alert("공유하려면 태그를 1개 이상 선택해주세요.");
-      return;
-    }
-
-    const finalTags = isQuick ? shareSelectedTags : feedback.tags;
+  const confirmAnonymousShare = async (feedback, shareMode) => {
+    if (!feedback) return;
 
     try {
       const response = await fetch(
@@ -615,7 +456,7 @@ function App() {
           body: JSON.stringify({
             isShared: true,
             shareMode,
-            tags: finalTags,
+            tags: feedback.tags || getTags(feedback.text || ""),
           }),
         }
       );
@@ -635,13 +476,18 @@ function App() {
       );
 
       setSharedFeedbackList([updatedFeedback, ...sharedFeedbackList]);
-      closeShareBox();
+      setPendingShare(null);
 
+      alert("익명 공유가 완료되었습니다.");
       goToPage("shared");
     } catch (error) {
       console.error(error);
       alert(`피드백 공유에 실패했습니다: ${error.message}`);
     }
+  };
+
+  const cancelAnonymousShare = () => {
+    setPendingShare(null);
   };
 
   const handleDeleteFeedback = async (id) => {
@@ -663,10 +509,6 @@ function App() {
 
       if (selectedFeedbackForChecklist?.id === id) {
         setSelectedFeedbackForChecklist(null);
-      }
-
-      if (shareTargetFeedback?.id === id) {
-        closeShareBox();
       }
     } catch (error) {
       console.error(error);
@@ -743,7 +585,6 @@ function App() {
         )
       );
       setSelectedFeedbackForChecklist(null);
-      closeShareBox();
       setCheckedChecklistItems({});
 
       localStorage.removeItem("projectRelayChecklistState");
@@ -845,6 +686,37 @@ function App() {
         <button onClick={() => goToPage("pattern")}>패턴 요약</button>
       </nav>
 
+      {page === "home" && showHomeNotice && (
+  <div className="home-notice-overlay">
+    <div className="home-notice-modal">
+      <button
+        className="home-notice-close"
+        onClick={() => setShowHomeNotice(false)}
+        aria-label="안내 닫기"
+      >
+        ×
+      </button>
+
+      <h2>익명 공유 전 꼭 확인해주세요</h2>
+
+      <p>
+        Project Relay의 공유 피드백은 이름 없이 익명으로 공개됩니다.
+        하지만 프로젝트 주제, 팀 상황, 피드백 내용에 따라 특정 개인이나 팀이
+        유추될 수 있습니다.
+      </p>
+
+      <p>
+        피드백을 공유하기 전에는 개인 정보, 팀을 식별할 수 있는 정보,
+        민감한 표현이 포함되어 있지 않은지 확인해주세요.
+      </p>
+
+      <p>
+        팀 프로젝트에 대한 피드백이라면, 팀원들과 동의를 받고 공유해주세요.
+      </p>
+    </div>
+  </div>
+)}
+
       {page === "home" && (
         <section>
           <h1>프로젝트 릴레이</h1>
@@ -853,28 +725,27 @@ function App() {
           <div className="box">
             <h2>다른 사람은 어떤 피드백을 받았을까요?</h2>
             <p>
-              Project Relay는 부트캠프 수강생들이 받은 피드백을 익명으로
-              공유하고, 반복해서 등장하는 약점을 함께 확인하는 서비스입니다.
-              내가 놓친 문제를 다른 사람의 피드백에서 미리 발견하고, 다음
-              프로젝트 체크리스트로 연결할 수 있습니다.
+              Project Relay는 부트캠프 수강생들이 받은 피드백을 익명으로 공유하고,
+              반복해서 등장하는 약점을 함께 확인하는 서비스입니다.
+              내가 놓친 문제를 다른 사람의 피드백에서 미리 발견하고,
+              다음 프로젝트 체크리스트로 연결할 수 있습니다.
             </p>
-            <p className="selected-info">
-              내 기록은 나에게만 보이며, 공유를 선택한 피드백만 익명으로
-              공개됩니다.
+              <p className="selected-info">
+              내 기록은 나에게만 보이며, 공유를 선택한 피드백만 익명으로 공개됩니다.
             </p>
           </div>
 
           <div className="button-row home-action-buttons">
-            <button onClick={() => goToPage("input")}>피드백 입력하기</button>
-            <button onClick={() => goToPage("shared")}>공유 피드백 보기</button>
-          </div>
+          <button onClick={() => goToPage("input")}>피드백 입력하기</button>
+          <button onClick={() => goToPage("shared")}>공유 피드백 보기</button>
+            </div>
 
           <div className="box">
-            <h2>공유 피드백 반복 TOP 3</h2>
+            <h2>전체 반복 피드백 TOP 3</h2>
             {sharedFeedbackList.length === 0 ? (
               <p>
-                아직 공유된 피드백이 없습니다. 사용자가 피드백을 익명 공유하면
-                반복되는 약점 태그가 이곳에 집계됩니다.
+                아직 공유된 피드백이 없습니다. 피드백을 공유하면 이 영역이
+                자동으로 업데이트됩니다.
               </p>
             ) : (
               <ol>
@@ -959,11 +830,9 @@ function App() {
             <button onClick={handleAnalyzeFeedback} disabled={isAnalyzing}>
               {isAnalyzing ? "분석 중..." : "GPT로 피드백 분석하기"}
             </button>
-
-            <button onClick={handleSaveWithoutAnalysis} disabled={isAnalyzing}>
-              분석 없이 바로 저장하기
-            </button>
-
+            <button onClick={handleSaveFeedback}>
+             분석 없이 바로 저장하기
+             </button>
             <button onClick={handleResetInput}>초기화하기</button>
           </div>
         </section>
@@ -979,8 +848,8 @@ function App() {
 
           <div className="box">
             <h2>입력 정보</h2>
-            <p>프로젝트 유형: {selectedProject}</p>
-            <p>피드백 출처: {selectedSource}</p>
+            <p>프로젝트 유형: {selectedProject || "선택되지 않음"}</p>
+            <p>피드백 출처: {selectedSource || "선택되지 않음"}</p>
           </div>
 
           <div className="box">
@@ -1172,7 +1041,7 @@ function App() {
                 </div>
 
                 <div className="feedback-section">
-                  <span className="feedback-section-label">입력한 피드백</span>
+                  <span className="feedback-section-label">원문 메모</span>
                   <div className="feedback-content-box feedback-raw-box">
                     <p className="feedback-content-text">{feedback.text}</p>
                   </div>
@@ -1223,7 +1092,7 @@ function App() {
                     삭제하기
                   </button>
 
-                  <button onClick={() => openShareBox(feedback)}>
+                  <button onClick={() => handleShareSavedFeedback(feedback)}>
                     익명 공유하기
                   </button>
 
@@ -1234,109 +1103,25 @@ function App() {
                   </button>
                 </div>
 
-                {shareTargetFeedback?.id === feedback.id && (
+                {pendingShare?.id === feedback.id && (
                   <div className="share-option-box">
-                    <h2>공유 방식을 선택해주세요</h2>
-                    <p>
-                      이 피드백을 다른 사용자에게 익명으로 공유합니다. 개인 이름,
-                      팀명, 회사명 등 식별 가능한 정보가 포함되어 있다면 요약만
-                      공유하는 것을 추천합니다.
+                    <p className="share-warning">
+                      요약만 공유하면 핵심 문제와 태그 중심으로 공개되고,
+                      원문 포함 공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
                     </p>
 
-                    {isQuickSavedFeedback(shareTargetFeedback) && (
-                      <>
-                        <p className="share-warning">
-                          이 피드백은 GPT 분석 없이 저장되어 별도 요약이 없습니다.
-                          공유 피드백에서 잘 분류될 수 있도록 관련 태그를 직접
-                          선택해주세요.
-                        </p>
-
-                        <div className="feedback-section">
-                          <span className="feedback-section-label">
-                            공유 태그 선택
-                          </span>
-
-                          <div className="tag-row">
-                            {tagOptions.map((tag) => (
-                              <button
-                                key={tag}
-                                onClick={() => toggleShareTag(tag)}
-                                className={
-                                  shareSelectedTags.includes(tag)
-                                    ? "selected"
-                                    : ""
-                                }
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                          </div>
-
-                          {shareSelectedTags.length === 0 && (
-                            <p className="selected-info">
-                              공유하려면 태그를 1개 이상 선택해주세요.
-                            </p>
-                          )}
-                        </div>
-                      </>
-                    )}
-
-                    <div className="shared-summary">
-                      {!isQuickSavedFeedback(shareTargetFeedback) && (
-                        <div className="summary-block problem">
-                          <span className="summary-label">
-                            요약 공유 미리보기
-                          </span>
-                          <p className="summary-text">
-                            {shareTargetFeedback.problemSummary ||
-                              shareTargetFeedback.shareSummary ||
-                              shareTargetFeedback.summary ||
-                              "요약된 피드백이 없습니다."}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="summary-block action">
-                        <span className="summary-label">
-                          원문 포함 공유 시 공개되는 내용
-                        </span>
-                        <p className="summary-text">
-                          {shareTargetFeedback.text ||
-                            "입력한 피드백이 없습니다."}
-                        </p>
-                      </div>
-                    </div>
-
-                    {!isQuickSavedFeedback(shareTargetFeedback) && (
-                      <p className="share-warning">
-                        요약만 공유하면 핵심 문제와 태그 중심으로 공개되고, 원문
-                        포함 공유를 선택하면 입력한 피드백 원문도 함께 공개됩니다.
-                      </p>
-                    )}
-
                     <div className="button-row share-option-buttons">
-                      {!isQuickSavedFeedback(shareTargetFeedback) && (
-                        <button
-                          onClick={() =>
-                            handleShareSavedFeedback(
-                              shareTargetFeedback,
-                              "summary"
-                            )
-                          }
-                        >
-                          요약만 공유하기
-                        </button>
-                      )}
-
                       <button
-                        onClick={() =>
-                          handleShareSavedFeedback(shareTargetFeedback, "full")
-                        }
+                        onClick={() => confirmAnonymousShare(feedback, "summary")}
                       >
+                        요약만 공유하기
+                      </button>
+
+                      <button onClick={() => confirmAnonymousShare(feedback, "raw")}>
                         원문 포함 공유하기
                       </button>
 
-                      <button onClick={closeShareBox}>취소</button>
+                      <button onClick={cancelAnonymousShare}>취소</button>
                     </div>
                   </div>
                 )}
@@ -1465,33 +1250,20 @@ function App() {
             <>
               <div className="box">
                 <h2>공유된 피드백 목록</h2>
-                <p>
-                  저장된 피드백 중 익명 공유한 항목만 이곳에 표시됩니다. 원문
-                  포함 공유를 선택한 피드백은 원문도 함께 표시됩니다.
-                </p>
+                <p>저장된 피드백 중 익명 공유한 항목만 이곳에 표시됩니다.</p>
               </div>
 
               {filteredSharedFeedbackList.map((feedback) => {
-                const quickSaved = isQuickSavedFeedback(feedback);
                 const { problemText } =
                   splitSummaryIntoProblemAndAction(feedback);
-
-                const cardTitle =
-                  quickSaved && feedback.shareMode === "full"
-                    ? makeShareSummary(feedback.text)
-                    : problemText;
 
                 return (
                   <div className="box shared-card" key={feedback.id}>
                     <div className="shared-card-header">
                       <span className="project-chip">{feedback.project}</span>
 
-                      <span className="feedback-section-label">
-                        {quickSaved ? "공유된 원문 요약" : "공유 요약"}
-                      </span>
-
                       <h2 className="card-eyebrow">
-                        {cardTitle || "요약된 피드백이 없습니다."}
+                        {feedback.summary || "요약된 피드백이 없습니다."}
                       </h2>
 
                       <div className="tag-row">
@@ -1503,34 +1275,12 @@ function App() {
                       </div>
                     </div>
 
-                    {!quickSaved && (
-                      <div className="shared-summary">
-                        <div className="summary-block problem">
-                          <span className="summary-label">핵심 문제</span>
-                          <p className="summary-text">{problemText}</p>
-                        </div>
+                    <div className="shared-summary">
+                      <div className="summary-block problem">
+                        <span className="summary-label">핵심 문제</span>
+                        <p className="summary-text">{problemText}</p>
                       </div>
-                    )}
-
-                    {quickSaved && (
-                      <p className="shared-note">
-                        GPT 분석 없이 저장되어 별도 핵심 문제 요약은 제공되지
-                        않습니다.
-                      </p>
-                    )}
-
-                    {feedback.shareMode === "full" && (
-                      <div className="feedback-section">
-                        <span className="feedback-section-label">
-                          공유된 원문 피드백
-                        </span>
-                        <div className="feedback-content-box feedback-raw-box">
-                          <p className="feedback-content-text">
-                            {feedback.text}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                    </div>
 
                     <div className="button-row">
                       <button
