@@ -78,6 +78,10 @@ function App() {
     "사용자 관점",
   ];
 
+  const isFeedbackShared = (feedback) => {
+    return Boolean(feedback?.isShared || feedback?.is_shared);
+  };
+
   const fetchFeedbacksFromDB = async () => {
     try {
       const response = await fetch(
@@ -433,7 +437,7 @@ function App() {
   };
 
   const handleShareSavedFeedback = (feedback) => {
-    if (feedback.isShared) {
+    if (isFeedbackShared(feedback)) {
       alert("이미 공유된 피드백입니다.");
       return;
     }
@@ -547,6 +551,8 @@ function App() {
           feedback.id === id ? updatedFeedback : feedback
         )
       );
+
+      setPendingShare(null);
     } catch (error) {
       console.error(error);
       alert(`공유 취소에 실패했습니다: ${error.message}`);
@@ -1000,7 +1006,7 @@ function App() {
                 <div className="feedback-card-header">
                   <h2 className="feedback-card-title">{feedback.project}</h2>
                   <span className="feedback-status-chip">
-                    {feedback.isShared ? "공유됨" : "미공유"}
+                    {isFeedbackShared(feedback) ? "공유됨" : "미공유"}
                   </span>
                 </div>
 
@@ -1093,9 +1099,15 @@ function App() {
                     삭제하기
                   </button>
 
-                  <button onClick={() => handleShareSavedFeedback(feedback)}>
-                    익명 공유하기
-                  </button>
+                  {isFeedbackShared(feedback) ? (
+                    <button onClick={() => handleDeleteSharedFeedback(feedback.id)}>
+                      공유 취소하기
+                    </button>
+                  ) : (
+                    <button onClick={() => handleShareSavedFeedback(feedback)}>
+                      익명 공유하기
+                    </button>
+                  )}
 
                   <button
                     onClick={() => setSelectedFeedbackForChecklist(feedback)}
@@ -1302,13 +1314,13 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="button-row">
-                      <button
-                        onClick={() => handleDeleteSharedFeedback(feedback.id)}
-                      >
-                        공유 취소하기
-                      </button>
-                    </div>
+                    {feedback.userId === userId && (
+  <div className="button-row">
+    <button onClick={() => handleDeleteSharedFeedback(feedback.id)}>
+      공유 취소하기
+    </button>
+  </div>
+)}
                   </div>
                 );
               })}
